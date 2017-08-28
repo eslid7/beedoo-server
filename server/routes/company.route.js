@@ -1,8 +1,7 @@
-﻿'use strict'
+'use strict'
 
 const express = require('express')
 const companiesController = require('../controllers/Companies_Controller')
-
 const router = express.Router()
 
 router.route('/')
