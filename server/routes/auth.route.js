@@ -3,7 +3,6 @@
 const express = require('express')
 const passport = require('passport')
 
-const authController = require('../controllers/Auth_Controller')
 const userController = require('../controllers/Users_Controller')
 const authHelper = require('../config/utils/authHelpers')
 
