@@ -3,6 +3,7 @@
 const companiesModel = require('../models/Companies')
 const categoriesModel = require('../models/Categories')
 const serversModel = require('../models/Servers')
+var Promise = require('bluebird')
 
 function getCompany (req, res) {
 	//se hace un find por id de la compañia
@@ -26,19 +27,54 @@ function getCompany (req, res) {
 
 function getAll (req, res) {
 	// se hace un find de todas las compañias
-	companiesModel.find().then(function (companyList) {
-		var companies = []
+	companiesModel.find().populate("categories").then(function (companyList) {
+		var companies_List = [];
 		//se hace un loop para agregar solo la info de las compañias que se necesita
 		//TODO paginación
-		companyList.forEach(function (companyObject) {
-			companies.push({
-				id: companyObject._id,
-				name: companyObject.name,
-				token: companyObject.token,
-				categories: companyObject.categories
-			})
+
+		return Promise.map(companyList, function(companies) {
+
+			return Promise.map(companies.categories, function (category) {
+				return serversModel.findOne({ category: category._id })
+				.then(function(server){
+					//console.log('server 1',server);
+					return server;
+				});
+			}).then(function (servers) {
+				//console.log('server 2',servers);
+				companies.categories.servers = [];
+				servers.forEach(function (server) {
+					if (server) {
+						companies.categories.servers.push({ id :server._id,environment : server.environment,
+							uri: server.uri, port : server.port ,
+							https :server.https , time :server.time, path :server.path , category :server.category});
+					}
+				})
+				//console.log('companies categories ', companies);
+				return companies;
+			});
+		}).each(function (companies) {
+			companies_List.categories =[]
+			if (companies) {
+				companies.categories.forEach(function (categori) {
+					if (categori) {
+						companies_List.categories.push({ id :categori._id,name : categori.name, company: categori.company,
+							server: companies.categories.servers});
+					}
+				});
+				companies_List.push({
+			 		id: companies._id,
+			 		name: companies.name,
+			 		token: companies.token,
+			 		categories : companies_List.categories
+			 	});
+			}
+			return companies_List;
+		}).then(function (companies) {
+			console.log('companies_List 22', companies_List);
+			return companies_List;
 		})
-		return companies
+
 	}).then(function (result) {
 		// se retorna la info de la compañias
 		res.status(200).json(result)
