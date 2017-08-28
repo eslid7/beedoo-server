@@ -72,7 +72,6 @@ function getAll (req, res) {
 			}
 			return companies_List;
 		}).then(function (companies) {
-			console.log('companies_List 22', companies_List);
 			return companies_List;
 		})
 
