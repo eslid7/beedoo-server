@@ -13,8 +13,8 @@ router.route('/google/login')
 
 router.route('/google/callback')
 	.get(passport.authenticate('google', {
-		successRedirect: '/profile',
-		failureRedirect: '/',
+		successRedirect: '/api/auth/successRedirect',
+		failureRedirect: '/api/auth/failureRedirect'
 	}))
 
 router.route('/facebook/login')
@@ -22,9 +22,24 @@ router.route('/facebook/login')
 
 router.route('/facebook/callback')
 	.get(passport.authenticate('facebook', {
-		successRedirect: '/profile',
-		failureRedirect: '/',
+		successRedirect: '/api/auth/successRedirect',
+		failureRedirect: '/api/auth/failureRedirect'
 	}))
+
+router.route('/successRedirect')
+	.get((req, res) => {
+		const user = req.user
+		res.status(200).json({
+			message: "Autenticación correctamente."
+		})
+	})
+
+router.route('/failureRedirect')
+	.get((req, res) => {
+		res.status(400).json({
+			error: 'ERROR: Error al intentar realizar la autenticación'
+		})
+	})
 
 router.route('/authenticated')
 	.get(authHelper.isAuth, (req, res) => {
@@ -38,7 +53,9 @@ router.route('/authenticated')
 router.route('/logout')
 	.get((req, res) => {
 		req.logout();
-		res.redirect('/');
+		res.status(200).json({
+			message: "Cierre de sesión."
+		})
 	})
 
 module.exports = router

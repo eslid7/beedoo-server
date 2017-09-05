@@ -87,9 +87,7 @@ function getAll (req, res) {
 }
 
 function saveCompany (req, res) {
-	const data = new companiesModel({
-		name: req.body.name
-	})
+	const data = new companiesModel(req.body)
 	data.save().then(function (companySaved) { //se salva la compañia
 		return companySaved
 	}).then(function (companySaved) {
@@ -109,6 +107,7 @@ function saveCompany (req, res) {
 				id: result._id,
 				name: result.name,
 				token: tempToken,
+				user: req.body.user,
 				categories: result.categories
 			})
 		})
