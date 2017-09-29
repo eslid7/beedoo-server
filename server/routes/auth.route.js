@@ -8,6 +8,12 @@ const authHelper = require('../config/utils/authHelpers')
 
 const router = express.Router()
 
+router.route('/signup')
+	.post(userController.signup)
+
+router.route('/login')
+	.post(userController.login)
+
 router.route('/google/login')
 	.get(passport.authenticate('google', { scope: ['email'] }))
 
