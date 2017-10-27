@@ -1,4 +1,4 @@
-﻿'use strict'
+'use strict'
 
 const userModel = require('../models/User')
 const jwt = require('jsonwebtoken')
@@ -18,47 +18,48 @@ function updateUser(req, res) {
 
 
 function signup (req, res) {
-	console.log(req.body.password)
-	const encryptPass = encrypt(req.body.password)
-	const tempUserData = {
-		username: req.body.email,
-		name: req.body.name,
-		lastName: req.body.lastName,
-		secondLastName: req.body.secondLastName,
-		createdAt: moment(new Date()).format('DD-MMM-YYYY'),
-		updateAt: moment(new Date()).format('DD-MMM-YYYY'),
-		email: req.body.email,
-		facebook: 0,
-		google: 0,
-		phone: req.body.phone,
-		password: encryptPass,
-		status: 1,
-		verifiedAccount: 1,
-		avatar: "",
-		gender: req.body.gender
-	}
 	// se busca primero para ver si no existe
-	return userModel.findOne({'username': tempUserData.username, 'email': tempUserData.email}).then(function (userData) {
-		return userData
-	}).then(function (userData) {
+	return userModel.findOne({'username': req.body.email}).then(function (userData) {
 		if (userData) {
-			return userData
+			throw Error ('El nombre de usuario que intenta registrar ya se encuentra utilizado.')
 		} else {
-			console.log("aqui")
-			//se crea un token para el usuario
-			const tempToken = jwt.sign({id: tempUserData.username}, 'b33dd00')
-			tempUserData.token = tempToken
-			const dataToSave = new userModel(tempUserData)
-			//se salva el usuario
-			return dataToSave.save().then(function (userSaved) {
-				return userSaved
-			}).then(function (userData) {
-				return userData
-			}).catch(function (err) {
-				// en caso de error se devuelve el error
-				return err
-			})
+			return {}
 		}
+	}).then(function (userData) {
+		const dataToSave = new userModel({
+			username: req.body.email,
+			name: req.body.name,
+			lastName: req.body.lastName,
+			secondLastName: req.body.secondLastName,
+			createdAt: moment(new Date()).format('DD-MMM-YYYY'),
+			updateAt: moment(new Date()).format('DD-MMM-YYYY'),
+			email: req.body.email,
+			facebook: 0,
+			google: 0,
+			phone: req.body.phone,
+			password: encrypt(req.body.password),
+			status: 0,
+			verifiedAccount: 0,
+			avatar: "",
+			gender: req.body.gender
+		})
+		//se salva el usuario
+		return dataToSave.save().then(function (userSaved) {
+			return userSaved
+		})
+	}).then(function (userSaved) {
+		//se crea un token para el usuario
+		const findBy = {
+			_id: userSaved._id
+		}
+		const tempToken = jwt.sign({id: userSaved._id}, 'b33dd00')
+		const tempUserData = {
+			token: tempToken
+		}
+		return userModel.update(findBy, tempUserData).then(function (userUpdated) {
+			userSaved.token = tempToken
+			return userSaved
+		})
 	}).then(function (userData) {
 		res.status(200).json({
 			id: userData.id,
