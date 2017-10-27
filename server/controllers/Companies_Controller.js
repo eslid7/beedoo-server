@@ -1,23 +1,36 @@
 'use strict'
 
-const companiesModel = require('../models/Companies')
-const categoriesModel = require('../models/Categories')
-const serversModel = require('../models/Servers')
 var Promise = require('bluebird')
 const jwt = require('jsonwebtoken')
 
+const companiesModel = require('../models/Companies')
+const categoriesModel = require('../models/Categories')
+const serversModel = require('../models/Servers')
+const { extractToken, verify } = require('../config/utils/token')
+
 function getCompany (req, res) {
-	//se hace un find por id de la compañia
-	companiesModel.findById(req.params.id).then(function (companyData) {
-		console.log('Company found')
-		// se crea una estructura solo con la info que se necesita
-		res.status(200).json({
-			id: companyData._id,
-			name: companyData.name,
-			token: companyData.token,
-			categories: companyData.categories
+	extractToken(req)
+	.then((token) => verify(token).then(tokenDecoded => tokenDecoded))
+	.then(token => {
+		console.log('Token decodificado', token)
+		companiesModel.findOne({_id:req.params.id, user:token.id}).then(function (companyData) {
+			if (companyData) {
+				res.status(200).json({
+					id: companyData._id,
+					name: companyData.name,
+					token: companyData.token,
+					categories: companyData.categories
+				})
+			} else {
+				throw new Error('Company not found')
+			}
+		}).catch((err) => {
+			res.status(500).json({
+				error: 'ERROR: ' + err
+			})
 		})
-	}).catch(function (err) {
+	})
+	.catch(function (err) {
 		// en caso de error se devuelve el error
 		console.log('ERROR: ' + err)
 		res.status(500).json({

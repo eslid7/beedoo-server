@@ -7,5 +7,6 @@ const router = express.Router()
 router.route('/')
 	.get()
 	.post(userController.saveUser)
+	.put(userController.updateUser)
 
 module.exports = router

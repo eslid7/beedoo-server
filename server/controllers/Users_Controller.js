@@ -5,6 +5,18 @@ const jwt = require('jsonwebtoken')
 const moment = require('moment')
 const crypto = require('crypto')
 
+
+function updateUser(req, res) {
+	console.log('here')
+	userModel.update(
+		{ _id: "59cebae00016b06026ce9eb4" },
+		{ $set: {
+			token:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5Y2ViYWUwMDAxNmIwNjAyNmNlOWViNCJ9.ZJVI_d4c4gC4JTd-Teiswx--4sWAa-TjYTwMKxwdM7Y"
+		}}
+	);
+}
+
+
 function signup (req, res) {
 	console.log(req.body.password)
 	const encryptPass = encrypt(req.body.password)
@@ -137,5 +149,6 @@ function encrypt(password) {
 module.exports = {
 	signup,
 	login,
-	saveUser
+	saveUser,
+	updateUser
 }
