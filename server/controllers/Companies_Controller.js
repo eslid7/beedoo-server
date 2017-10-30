@@ -12,7 +12,7 @@ function getCompany (req, res) {
 	extractToken(req)
 	.then((token) => verify(token).then(tokenDecoded => tokenDecoded))
 	.then(token => {
-		console.log('Token decodificado', token)
+		console.log('Token decodificado', token.id)
 		companiesModel.findOne({_id:req.params.id, user:token.id}).then(function (companyData) {
 			if (companyData) {
 				res.status(200).json({
@@ -22,6 +22,7 @@ function getCompany (req, res) {
 					categories: companyData.categories
 				})
 			} else {
+				console.log('companyData ', companyData)
 				throw new Error('Company not found')
 			}
 		}).catch((err) => {
@@ -49,31 +50,49 @@ function getAll (req, res) {
 		return Promise.map(companyList, function(companies) {
 
 			return Promise.map(companies.categories, function (category) {
-				return serversModel.findOne({ category: category._id })
-				.then(function(server){
-					//console.log('server 1',server);
-					return server;
+				//console.log('category._id ',category._id);
+				return serversModel.find({ category: category._id })
+				.then(function(servers){
+					//console.log('server 1',servers);
+					return servers;
 				});
-			}).then(function (servers) {
-				//console.log('server 2',servers);
+			}).then(function (serversToLoad) {
+				//console.log('server 2',serversToLoad);
 				companies.categories.servers = [];
-				servers.forEach(function (server) {
-					if (server) {
-						companies.categories.servers.push({ id :server._id,environment : server.environment,
-							uri: server.uri, port : server.port ,
-							https :server.https , time :server.time, path :server.path , category :server.category});
-					}
-				})
+				serversToLoad.forEach(function (serverList) {
+					serverList.forEach(function(server) {
+						if (server) {
+								//companies.categories.servers = [];
+								companies.categories.servers.push({ id :server._id,environment : server.environment,
+									uri: server.uri, port : server.port ,
+									https :server.https , time :server.time, path :server.path , category :server.category});
+							}
+
+					});
+				});
 				//console.log('companies categories ', companies);
 				return companies;
 			});
 		}).each(function (companies) {
 			companies_List.categories =[]
+
 			if (companies) {
 				companies.categories.forEach(function (categori) {
-					if (categori) {
+					if (categori ) {
+						var serversList =[];
+						companies.categories.servers.forEach(function(element){
+							//console.log('element.category  ', element.category);
+							//console.log('categori._id  ', categori._id);
+							if(element.category.toString() == categori._id.toString()){
+								//console.log('equalllllllLLllllllllllllllll  ');
+								serversList.push(element)
+							}
+						});
+
+						//console.log(' lisatdo de servers ', companies.categories.servers);
 						companies_List.categories.push({ id :categori._id,name : categori.name, company: categori.company,
-							server: companies.categories.servers});
+							server: serversList });
+						//companies.categories.servers
 					}
 				});
 				companies_List.push({
