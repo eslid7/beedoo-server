@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken')
 const moment = require('moment')
 const crypto = require('crypto')
 const tools = require('../config/utils/tools')
+const MailServices = require('../config/utils/mailServices')
+const mailTemplates = require('../config/utils/emailTemplates')
 
 
 function updateUser(req, res) {
@@ -19,8 +21,6 @@ function updateUser(req, res) {
 
 
 function signup (req, res) {
-	const MailServices = require('../config/utils/mailServices')
-	const mailTemplates = require('../config/utils/emailTemplates')
 
 	// se busca primero para ver si no existe
 	return userModel.findOne({'username': req.body.email}).then(function (userData) {
@@ -216,10 +216,45 @@ function validateAccount(req, res) {
 	})
 }
 
+function resendMail(req, res) {
+	// se busca primero para ver si no existe
+	return userModel.findById(req.body.id).then(function (userData) {
+		if (!userData) {
+			throw ('El usuario que intenta buscar no existe.')
+		}
+		return userData
+	}).then(function (userData) {
+		var linkCode = new Date().getTime();
+		MailServices.sendMail( {
+			subject: "Confirmación de Correo Electrónico",
+			to: userData.email,
+			isText: false,
+			msn: mailTemplates.accountConfirmation({
+				name: userData.name,
+				lastName: userData.lastName,
+				encryptData: tools.encryptData(`${linkCode}_${userData._id}`, 'aes256', "b33dd00", "el link de confirmación de correo.")
+			})
+		}, function (resp) {
+			if (resp.code === 200) {
+				res.status(200).json({ message: "Se envió un email al correo indicado, favor verificarlo para continuar!" });
+			} else {
+				res.status(500).json({ message: "No se pudo enviar el email, favor verificar el email si es el correcto!" });
+			}
+		});
+	}).catch(function (err) {
+		// en caso de error se devuelve el error
+		console.log('ERROR: ' + err)
+		res.status(500).json({
+			error: err
+		})
+	})
+}
+
 module.exports = {
 	signup,
 	login,
 	saveUser,
 	updateUser,
-	validateAccount
+	validateAccount,
+	resendMail
 }

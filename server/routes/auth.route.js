@@ -14,6 +14,9 @@ router.route('/signup')
 router.route('/accountConfirmation')
 	.get(userController.validateAccount)
 
+router.route('/resendMail')
+	.post(userController.resendMail)
+
 router.route('/login')
 	.post(userController.login)
 
