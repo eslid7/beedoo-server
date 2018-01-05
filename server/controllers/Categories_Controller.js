@@ -1,4 +1,4 @@
-﻿'use strict'
+'use strict'
 
 const categoriesModel = require('../models/Categories')
 const companiesModel = require('../models/Companies')
@@ -19,7 +19,7 @@ function getCategory (req, res) {
 		// en caso de error se devuelve el error
 		console.log('ERROR: ' + err)
 		res.status(500).json({
-			error: 'ERROR: ' + err
+			error: err
 		})
 	})
 }
@@ -44,7 +44,7 @@ function getAll (req, res) {
 		res.status(200).json(result)
 	}).catch(function (err) {
 		res.status(500).json({
-			error: 'ERROR: ' + err
+			error: err
 		})
 	})
 }
@@ -82,7 +82,7 @@ function saveCategory (req, res) {
 		})
 	}).catch(function (err) {
 		res.status(500).json({
-			error: 'ERROR: ' + err
+			error: err
 		})
 	})
 }
@@ -107,7 +107,7 @@ function updateCategory (req, res) {
 	}).catch(function (err) {
 		// en caso de error se devuelve el error
 		res.status(500).json({
-			error: 'ERROR: ' + err
+			error: err
 		})
 	})
 }
@@ -160,7 +160,7 @@ function deleteCategory (req, res) {
 	}).catch(function (err) {
 		// en caso de error se devuelve el error
 		res.status(500).json({
-			error: 'ERROR: ' + err
+			error: err
 		})
 	})
 }

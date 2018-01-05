@@ -33,7 +33,12 @@ module.exports.initRoutes = function initRoutes(app) {
 
 module.exports.initDB = function initDB() {
 	mongoose.Promise = global.Promise
-	mongoose.connect(config.mongoURL, { server: { socketOptions: {  keepAlive: 1 } } })
+	mongoose.connect(config.mongoURL, {
+		socketTimeoutMS: 0,
+		keepAlive: true,
+		reconnectTries: 30,
+		useMongoClient: true
+	});
 	mongoose.connection.on('error', (err) => {
 		console.error(`Unable to connect to database: ${config.mongoURL}`)
 		console.error('Por favor verificar que Mongodb esta instalado y corriendo!')
@@ -46,12 +51,19 @@ module.exports.initMiddlewares = function initMiddlewares(app) {
 	app.use(bodyParser.urlencoded({ extended: false }))
 }
 
+module.exports.initViewsEngine = function initViewsEngine(app) {
+	app.set('view engine', 'ejs');
+	app.set('views', './server/views');
+	app.use(express.static('./server/public'));
+}
+
 module.exports.init = () => {
 	const app = express()
 	this.initMiddlewares(app)
 	this.initDB()
 	this.initPassport(app)
 	this.initRoutes(app)
+	this.initViewsEngine(app)
 	app.listen(config.port, (err) => {
 		console.log("**********************");
 		console.log("beedoo-server online");

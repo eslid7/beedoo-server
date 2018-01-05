@@ -4,6 +4,7 @@ const userModel = require('../models/User')
 const jwt = require('jsonwebtoken')
 const moment = require('moment')
 const crypto = require('crypto')
+const tools = require('../config/utils/tools')
 
 
 function updateUser(req, res) {
@@ -18,10 +19,13 @@ function updateUser(req, res) {
 
 
 function signup (req, res) {
+	const MailServices = require('../config/utils/mailServices')
+	const mailTemplates = require('../config/utils/emailTemplates')
+
 	// se busca primero para ver si no existe
 	return userModel.findOne({'username': req.body.email}).then(function (userData) {
 		if (userData) {
-			throw Error ('El nombre de usuario que intenta registrar ya se encuentra utilizado.')
+			throw ('El nombre de usuario que intenta registrar ya se encuentra utilizado.')
 		} else {
 			return {}
 		}
@@ -61,30 +65,42 @@ function signup (req, res) {
 			return userSaved
 		})
 	}).then(function (userData) {
-		res.status(200).json({
-			id: userData.id,
-			token: userData.token,
-			username: userData.username,
-			name: userData.name,
-			lastName: userData.lastName,
-			secondLastName: userData.secondLastName,
-			createdAt: userData.createdAt,
-			updateAt: userData.updateAt,
-			email: userData.email,
-			facebook: userData.facebook,
-			google: userData.google,
-			phone: userData.phone,
-			password: userData.password,
-			status: userData.status,
-			verifiedAccount: userData.verifiedAccount,
-			avatar: userData.avatar,
-			gender: userData.gender
-		})
+		var linkCode = new Date().getTime();
+		MailServices.sendMail( {
+			subject: "Confirmación de Correo Electrónico",
+			to: userData.email,
+			isText: false,
+			msn: mailTemplates.accountConfirmation({
+				name: userData.name,
+				lastName: userData.lastName,
+				encryptData: tools.encryptData(`${linkCode}_${userData.id}`, 'aes256', "b33dd00", "el link de confirmación de correo.")
+			})
+		}, function (resp) {
+			res.status(200).json({
+				id: userData.id,
+				token: userData.token,
+				username: userData.username,
+				name: userData.name,
+				lastName: userData.lastName,
+				secondLastName: userData.secondLastName,
+				createdAt: userData.createdAt,
+				updateAt: userData.updateAt,
+				email: userData.email,
+				facebook: userData.facebook,
+				google: userData.google,
+				phone: userData.phone,
+				password: userData.password,
+				status: userData.status,
+				verifiedAccount: userData.verifiedAccount,
+				avatar: userData.avatar,
+				gender: userData.gender
+			})
+		});
 	}).catch(function (err) {
 		// en caso de error se devuelve el error
 		console.log('ERROR: ' + err)
 		res.status(500).json({
-			error: 'ERROR: ' + err
+			error: err
 		})
 	})
 }
@@ -147,9 +163,63 @@ function encrypt(password) {
 	return shasum.digest('hex')
 }
 
+function validateAccount(req, res) {
+	if (!req.query.u) {
+		return res.render('accountConfirmation', {
+			isValid: false,
+			type: 1
+		});
+	}
+	const dataDecrypted = tools.decryptData(req.query.u, "aes256", "b33dd00", "el link de reinicio de contraseña"),
+		dataToArray = dataDecrypted.split('_'),
+		linkCode = dataToArray[0] || "",
+		userID = dataToArray[1] || "";
+
+	userModel.findById(userID).then(function (userData) {
+		if (!userData) {
+			throw ({
+				type: 2
+			})
+		} else if (userData.status === 1) {
+			throw ({
+				type: 3
+			})
+		}
+		return userData
+	}).then(function (userData) {
+		const findBy = {
+			_id: userData._id
+		}
+		const tempUserData = {
+			status: 1
+		}
+		return userModel.update(findBy, tempUserData).then(function (userUpdated) {
+			if (userUpdated.ok !== 1) {
+				throw ({
+					type: 4
+				})
+			}
+			userData.status = 1
+			return userData
+		})
+	}).then(function (userData) {
+		return res.render('accountConfirmation', {
+			isValid: true
+		});
+	}).catch(function (err) {
+		// en caso de error se devuelve el error
+		console.log('ERROR: ' + err.type)
+		return res.render('accountConfirmation', {
+			isValid: false,
+			type: err.type
+		});
+	})
+}
+
 module.exports = {
 	signup,
 	login,
 	saveUser,
-	updateUser
+	updateUser,
+	validateAccount
 }

@@ -1,4 +1,4 @@
-﻿'use strict'
+'use strict'
 
 const serversModel = require('../models/Servers')
 const categoriesModel = require('../models/Categories')
@@ -21,7 +21,7 @@ function getServer (req, res) {
 		// en caso de error se devuelve el error
 		console.log('ERROR: ' + err)
 		res.status(500).json({
-			error: 'ERROR: ' + err
+			error: err
 		})
 	})
 }
@@ -55,7 +55,7 @@ function getAll (req, res) {
 	}).catch(function (err) {
 		// en caso de error se devuelve el error
 		res.status(500).json({
-			error: 'ERROR: ' + err
+			error: err
 		})
 	})
 }
@@ -97,7 +97,7 @@ function saveServer (req, res) {
 	}).catch(function (err) {
 		// en caso de error se devuelve el error
 		res.status(500).json({
-			error: 'ERROR: ' + err
+			error: err
 		})
 	})
 }
@@ -130,7 +130,7 @@ function updateServer (req, res) {
 	}).catch(function (err) {
 		// en caso de error se devuelve el error
 		res.status(500).json({
-			error: 'ERROR: ' + err
+			error: err
 		})
 	})
 }
@@ -178,7 +178,7 @@ function deleteServer (req, res) {
 	}).catch(function (err) {
 		// en caso de error se devuelve el error
 		res.status(500).json({
-			error: 'ERROR: ' + err
+			error: err
 		})
 	})
 }
@@ -211,7 +211,7 @@ function testPromises(req, res) {
 		})
 		.catch(function (err) {
 			res.status(500).json({
-				error: 'ERROR: ' + err
+				error: err
 			})
 		})
 }
